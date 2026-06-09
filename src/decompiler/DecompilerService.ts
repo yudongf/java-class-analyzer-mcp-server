@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as yauzl from 'yauzl';
 import { fileURLToPath } from 'url';
 import { createWriteStream } from 'fs';
+import * as os from 'os';
 import { DependencyScanner } from '../scanner/DependencyScanner.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,7 +27,12 @@ export class DecompilerService {
         if (!this.cfrPath) {
             this.cfrPath = await this.findCfrJar();
             if (!this.cfrPath) {
-                throw new Error('未找到CFR反编译工具。请下载CFR jar包到lib目录或设置CFR_PATH环境变量');
+                throw new Error(
+                    '未找到CFR反编译工具。请通过以下方式之一配置：\n' +
+                    '  1. 设置 CFR_PATH 环境变量指向 cfr jar 文件路径\n' +
+                    '  2. 将 cfr jar 放到 ~/cfr-*.jar（用户主目录）\n' +
+                    '  3. 将 cfr jar 放到项目 lib/ 目录下'
+                );
             }
             console.error(`CFR工具路径: ${this.cfrPath}`);
         }
@@ -39,6 +45,9 @@ export class DecompilerService {
         try {
             // 如果外部指定了CFR路径，则使用外部路径
             if (cfrPath) {
+                if (!(await fs.pathExists(cfrPath))) {
+                    throw new Error(`外部指定的CFR路径不存在: ${cfrPath}`);
+                }
                 this.cfrPath = cfrPath;
                 console.error(`使用外部指定的CFR工具路径: ${this.cfrPath}`);
             } else {
@@ -64,7 +73,7 @@ export class DecompilerService {
             ]);
 
             if (!jarPath) {
-                throw new Error(`未找到类 ${className} 对应的JAR包，请先运行 scan_dependencies 建立类索引`);
+                throw new Error(`未找到类 ${className} 对应的JAR包，请先运行 scan_dependencies 建立类索引，或使用全限定类名（如 com.example.${className}）`);
             }
             console.error(`找到JAR包: ${jarPath}`);
 
@@ -81,14 +90,12 @@ export class DecompilerService {
                 console.error(`反编译结果已缓存: ${cachePath}`);
             }
 
-            // 6. 清理临时文件（只有在不使用缓存时才清理）
-            if (!useCache) {
-                try {
-                    await fs.remove(classFilePath);
-                    console.error(`清理临时文件: ${classFilePath}`);
-                } catch (cleanupError) {
-                    console.warn(`清理临时文件失败: ${cleanupError}`);
-                }
+            // 6. 清理临时 .class 文件
+            try {
+                await fs.remove(classFilePath);
+                console.error(`清理临时文件: ${classFilePath}`);
+            } catch (cleanupError) {
+                console.warn(`清理临时文件失败: ${cleanupError}`);
             }
 
             return sourceCode;
@@ -114,7 +121,11 @@ export class DecompilerService {
      */
     private async extractClassFile(jarPath: string, className: string): Promise<string> {
         const classFileName = className.replace(/\./g, '/') + '.class';
-        const tempDir = path.join(process.cwd(), '.mcp-class-temp');
+        const tmpBase = os.tmpdir();
+        // os.tmpdir() 在某些环境（如 MCP 服务器进程）下可能返回 '/' 或空串，此时回退到 user.home
+        const tempDir = (tmpBase && tmpBase !== '/')
+            ? path.join(tmpBase, 'mcp-class-temp')
+            : path.join(process.env.HOME || process.env.USERPROFILE || process.cwd(), '.mcp-class-temp');
         // 按包名全路径创建目录结构
         const packagePath = className.substring(0, className.lastIndexOf('.'));
         const packageDir = path.join(tempDir, packagePath.replace(/\./g, path.sep));
@@ -178,7 +189,12 @@ export class DecompilerService {
      */
     private async decompileWithCfr(classFilePath: string): Promise<string> {
         if (!this.cfrPath) {
-            throw new Error('未找到CFR反编译工具，请确保CFR jar包在classpath中');
+            throw new Error(
+                '未找到CFR反编译工具。请通过以下方式之一配置：\n' +
+                '  1. 设置 CFR_PATH 环境变量指向 cfr jar 文件路径\n' +
+                '  2. 将 cfr jar 放到 ~/cfr-*.jar（用户主目录）\n' +
+                '  3. 将 cfr jar 放到项目 lib/ 目录下'
+            );
         }
 
         try {
@@ -213,9 +229,34 @@ export class DecompilerService {
 
     /**
      * 查找CFR jar包路径
+     * 查找顺序：(1) CFR_PATH 环境变量 (2) user.home 目录 (3) 项目 lib 目录 (4) CLASSPATH
      */
     private async findCfrJar(): Promise<string> {
-        // 尝试从多个可能的位置查找CFR
+        // 第1步：检查 CFR_PATH 环境变量
+        const cfrPathEnv = process.env.CFR_PATH;
+        if (cfrPathEnv) {
+            if (await fs.pathExists(cfrPathEnv)) {
+                console.error(`从 CFR_PATH 环境变量获取: ${cfrPathEnv}`);
+                return cfrPathEnv;
+            }
+            console.error(`CFR_PATH 环境变量已配置但文件不存在: ${cfrPathEnv}`);
+        } else {
+            console.error('CFR_PATH 环境变量未配置');
+        }
+
+        // 第2步：尝试从 user.home 目录查找
+        const userHome = process.env.HOME || process.env.USERPROFILE;
+        if (userHome) {
+            const homeFiles = await readdir(userHome).catch(() => [] as string[]);
+            const cfrJar = homeFiles.find(file => /^cfr-.*\.jar$/.test(file));
+            if (cfrJar) {
+                const jarPath = path.join(userHome, cfrJar);
+                console.error(`从用户主目录获取: ${jarPath}`);
+                return jarPath;
+            }
+        }
+
+        // 第3步：从项目 lib 目录等位置查找
         const searchPaths = [
             path.join(process.cwd(), 'lib'),
             process.cwd(),
@@ -233,7 +274,7 @@ export class DecompilerService {
             }
         }
 
-        // 如果没找到，尝试从classpath中查找
+        // 第4步：从 CLASSPATH 查找
         const classpath = process.env.CLASSPATH || '';
         const classpathEntries = classpath.split(path.delimiter);
 

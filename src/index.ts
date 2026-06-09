@@ -20,7 +20,7 @@ export class JavaClassAnalyzerMCPServer {
         this.server = new Server(
             {
                 name: 'java-class-analyzer',
-                version: '1.0.0',
+                version: '1.0.1',
                 capabilities: {
                     tools: {
                         scan_dependencies: {

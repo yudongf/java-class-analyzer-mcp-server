@@ -8,7 +8,7 @@ const program = new Command();
 program
     .name('java-class-analyzer-mcp')
     .description('Java Class Analyzer MCP Server - 用于Java类文件分析和反编译的MCP服务器')
-    .version('1.0.0');
+    .version('1.0.1');
 
 program
     .command('start')

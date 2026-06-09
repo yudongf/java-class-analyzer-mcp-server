@@ -332,7 +332,8 @@ export class JavaClassAnalyzer {
     private getJavapCommand(): string {
         const javaHome = process.env.JAVA_HOME;
         if (javaHome) {
-            return path.join(javaHome, 'bin', 'javap.exe');
+            const javapCmd = process.platform === 'win32' ? 'javap.exe' : 'javap';
+            return path.join(javaHome, 'bin', javapCmd);
         }
         return 'javap';
     }

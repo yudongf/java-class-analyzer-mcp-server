@@ -254,8 +254,37 @@ export class DependencyScanner {
         const indexData = await fs.readJson(indexPath);
         const classIndex: ClassIndexEntry[] = indexData.classIndex;
 
+        // 精确匹配全限定类名
         const entry = classIndex.find(entry => entry.className === className);
-        return entry ? entry.jarPath : null;
+        if (entry) {
+            return entry.jarPath;
+        }
+
+        // 模糊匹配：用 simpleName 或短类名匹配，找出候选类
+        const simpleName = className.includes('.') ? className.substring(className.lastIndexOf('.') + 1) : className;
+        const candidates = classIndex.filter(entry => entry.simpleName === simpleName);
+
+        if (candidates.length === 1) {
+            console.error(`未找到精确类名 ${className}，通过简单类名匹配到: ${candidates[0].className}`);
+            return candidates[0].jarPath;
+        } else if (candidates.length > 1) {
+            const candidateNames = candidates.map(e => e.className).join(', ');
+            throw new Error(
+                `未找到精确类名 ${className}，但找到 ${candidates.length} 个同名类，请使用全限定类名：\n  ${candidateNames}`
+            );
+        }
+
+        // 尝试包含匹配（className 包含输入值）
+        const containsMatches = classIndex.filter(entry => entry.className.includes(className));
+        if (containsMatches.length > 0) {
+            const candidateNames = containsMatches.slice(0, 10).map(e => e.className).join('\n  ');
+            const suffix = containsMatches.length > 10 ? `\n  ... 共 ${containsMatches.length} 个匹配` : '';
+            throw new Error(
+                `未找到类 ${className}，但找到 ${containsMatches.length} 个包含该名称的类：\n  ${candidateNames}${suffix}`
+            );
+        }
+
+        return null;
     }
 
     /**
