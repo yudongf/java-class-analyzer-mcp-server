@@ -1,6 +1,8 @@
 # Java Class Analyzer MCP Server
 
-> 本项目基于 [handsomestWei/java-class-analyzer-mcp-server](https://github.com/handsomestWei/java-class-analyzer-mcp-server) 改造而来，在保留原有 MCP 工具能力的基础上，重点完善了 **Windows / macOS 跨平台支持** 与 **CFR 反编译工具的查找与加载逻辑**，使其可直接在 macOS / Linux 环境下稳定运行。
+> 当前项目地址：[yudongf/java-class-analyzer-mcp-server](https://github.com/yudongf/java-class-analyzer-mcp-server)（基于 [handsomestWei/java-class-analyzer-mcp-server](https://github.com/handsomestWei/java-class-analyzer-mcp-server) 改造）。
+>
+> 在保留原有 MCP 工具能力的基础上，重点完善了 **Windows / macOS 跨平台支持** 与 **CFR 反编译工具的查找与加载逻辑**，使其可直接在 macOS / Linux 环境下稳定运行。
 
 一个基于Model Context Protocol (MCP)的Java类分析服务，可以扫描Maven项目依赖、反编译Java类文件、获取class方法列表等详细信息，并提供给LLM进行代码分析。
 
@@ -121,7 +123,8 @@ java-class-analyzer-mcp config -o mcp-client-config.json
             "env": {
                 "NODE_ENV": "production",
                 "MAVEN_REPO": "D:/maven/repository",
-                "JAVA_HOME": "C:/Program Files/Java/jdk-11"
+                "JAVA_HOME": "C:/Program Files/Java/jdk-11",
+                "CFR_PATH": "D:/tools/cfr-0.152.jar"
             }
         }
     }
@@ -140,7 +143,8 @@ java-class-analyzer-mcp config -o mcp-client-config.json
             "env": {
                 "NODE_ENV": "production",
                 "MAVEN_REPO": "D:/maven/repository",
-                "JAVA_HOME": "C:/Program Files/Java/jdk-11"
+                "JAVA_HOME": "C:/Program Files/Java/jdk-11",
+                "CFR_PATH": "D:/tools/cfr-0.152.jar"
             }
         }
     }
