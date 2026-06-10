@@ -74,6 +74,7 @@ Cursor等AI工具直接生成调用二方（内部调用）、三方包（外部
 - macOS / Linux：`export CFR_PATH=$HOME/cfr-0.152.jar`，或直接将 jar 放到 `~/cfr-0.152.jar`，无需任何额外配置即可被自动识别。
 
 **cfr下载地址**
+
 [leibnitz27/cfr](https://github.com/leibnitz27/cfr/releases)
 
 ### 三、其它改造
