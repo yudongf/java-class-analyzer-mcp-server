@@ -73,6 +73,9 @@ Cursor等AI工具直接生成调用二方（内部调用）、三方包（外部
 - Windows：下载 `cfr-0.152.jar` 后设置环境变量 `CFR_PATH=D:\tools\cfr-0.152.jar`，或放到 `%USERPROFILE%\cfr-0.152.jar`。
 - macOS / Linux：`export CFR_PATH=$HOME/cfr-0.152.jar`，或直接将 jar 放到 `~/cfr-0.152.jar`，无需任何额外配置即可被自动识别。
 
+**cfr下载地址**
+[leibnitz27/cfr](https://github.com/leibnitz27/cfr/releases)
+
 ### 三、其它改造
 
 - **类名查找支持模糊匹配**：[`DependencyScanner.findJarForClass()`](src/scanner/DependencyScanner.ts:254) 精确匹配失败后会按 simpleName 唯一匹配、多候选报错、包含匹配三级回退，输入短类名也能定位。
