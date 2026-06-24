@@ -100,6 +100,7 @@ git clone https://github.com/yudongf/java-class-analyzer-mcp-server.git
 cd java-class-analyzer-mcp-server
 npm install
 npm run build
+npm install -g .
 ```
 
 ### MCP服务配置
