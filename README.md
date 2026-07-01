@@ -75,7 +75,9 @@ Cursor等AI工具直接生成调用二方（内部调用）、三方包（外部
 
 **cfr下载地址**
 
+下面是CFR的下载地址，选择最新的版本即可：
 [leibnitz27/cfr](https://github.com/leibnitz27/cfr/releases)
+目前最新版本是0.152，下载到本地磁盘上（记好路径，后续配置时需要）。
 
 ### 三、其它改造
 
@@ -118,7 +120,7 @@ java-class-analyzer-mcp config -o mcp-client-config.json
 
 参考以下配置示例，添加到MCP客户端配置文件中：
 
-**全局安装后的配置：**
+**Windows全局安装后的配置：**
 ```json
 {
     "mcpServers": {
@@ -135,6 +137,34 @@ java-class-analyzer-mcp config -o mcp-client-config.json
     }
 }
 ```
+
+
+**MAC全局安装后的配置(添加自动授权)：**
+``` json
+{
+  "mcpServers": {
+    "java-class-analyzer": {
+      "autoApprove": [
+        "scan_dependencies",
+        "analyze_class",
+        "decompile_class"
+      ],
+      "disabled": false,
+      "timeout": 180,
+      "command": "java-class-analyzer-mcp",
+      "type": "stdio",
+      "transportType": "stdio",
+      "args": [
+        "start"
+      ],
+      "env": {
+        "NODE_ENV": "production",
+        "MAVEN_REPO": "/tools/maven/repo",
+        "CFR_PATH": "/tools/cfr-0.152.jar"
+      }
+    }
+  }
+}
 
 **本地安装后的配置：**
 ```json
